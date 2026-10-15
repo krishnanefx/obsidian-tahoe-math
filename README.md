@@ -5,7 +5,7 @@
 ![Answers appearing after = as you type](images/demo.png)
 
 - `5 km + 300 m =` → **5.3 km**
-- `hotel = $135 * 3` then `flights + hotel =` → **$825.00**
+- `flights = $420`, `hotel = $135 * 3`, then `flights + hotel =` → **$825.00**
 - `f(t) = t^2 + 1` then `f(4) =` → **17**
 
 ## What it understands
