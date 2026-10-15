@@ -17,7 +17,7 @@
 
 import { Plugin, PluginSettingTab, Setting, editorInfoField } from "obsidian";
 import { ViewPlugin, Decoration, WidgetType, keymap } from "@codemirror/view";
-import { Prec, RangeSetBuilder } from "@codemirror/state";
+import { EditorState, Prec, RangeSetBuilder } from "@codemirror/state";
 
 // mathjs (about 1 MB) loads the first time it's needed, in idle time after
 // Obsidian opens, so starting Obsidian never waits for it. Until it has, there
@@ -509,6 +509,43 @@ function mathPlugin(plugin) {
   );
 }
 
+// Obsidian pairs a typed * as ** for emphasis, so "rate * 4 =" became
+// "rate * 4 =*", with no answer. In a line of maths, a typed * stays one *.
+function singleStar(plugin) {
+  return EditorState.transactionFilter.of((tr) => {
+    if (!tr.docChanged || !tr.isUserEvent("input.type") || tr.startState.selection.ranges.length !== 1) return tr;
+    let typed = null;
+    tr.changes.iterChanges((fromA, toA, fromB, toB, text) => {
+      typed = typed === null ? { from: fromA, to: toA, text: text.toString() } : false;
+    });
+    if (!typed || typed.text !== "**" || typed.from !== typed.to || !plugin.activeForState(tr.startState)) return tr;
+    if (!inMathsLine(tr.startState, typed.from)) return tr;
+    return { changes: { from: typed.from, insert: "*" }, selection: { anchor: typed.from + 1 }, userEvent: "input.type", scrollIntoView: true };
+  });
+}
+
+// Multiplication rather than emphasis: after a number, ) or %, in a line that
+// defines something, or after a variable the note defines above.
+function inMathsLine(state, pos) {
+  const doc = state.doc;
+  const line = doc.lineAt(pos);
+  const before = line.text.slice(0, pos - line.from);
+  const last = before.replace(/\s+$/, "");
+  if (!last || insideFence(doc, line.number)) return false;
+  if (/[\d)\]%]$/.test(last)) return true;
+  if (DEFINITION.test(before)) return true;
+  const word = /([\p{L}_][\p{L}\p{N}_]*)$/u.exec(last);
+  if (!word) return false;
+  const above = doc.sliceString(0, line.from);
+  return new RegExp(`^[ \\t>*-]*${word[1]}\\s*(?:\\([^)]*\\))?\\s*=`, "m").test(above);
+}
+
+function insideFence(doc, lineNumber) {
+  let open = false;
+  for (let n = 1; n < lineNumber; n++) if (/^\s*(```|~~~)/.test(doc.line(n).text)) open = !open;
+  return open;
+}
+
 // Tab at the end of a line with a result writes the result into the note.
 function acceptKeymap(plugin) {
   return Prec.high(
@@ -543,7 +580,7 @@ export default class TahoeMathPlugin extends Plugin {
     const words = this.settings.words || {};
     for (const [q, expr] of Object.entries(words)) if (!grounded(q, expr) || ruleRewrite(q)) delete words[q];
     this.addSettingTab(new TahoeMathSettingTab(this.app, this));
-    this.registerEditorExtension([mathPlugin(this), acceptKeymap(this)]);
+    this.registerEditorExtension([mathPlugin(this), acceptKeymap(this), singleStar(this)]);
     this.registerMarkdownPostProcessor((el, ctx) => this.decorateReadingView(el, ctx));
 
     this.addCommand({
@@ -631,9 +668,13 @@ export default class TahoeMathPlugin extends Plugin {
   }
 
   activeFor(view) {
+    return this.activeForState(view.state);
+  }
+
+  activeForState(state) {
     if (!this.settings.enabled) return false;
     if (!this.settings.onlyTagged) return true;
-    const info = view.state.field(editorInfoField, false);
+    const info = state.field(editorInfoField, false);
     const file = info && info.file;
     if (!file) return false;
     const fm = this.app.metadataCache.getFileCache(file);
@@ -731,4 +772,4 @@ class TahoeMathSettingTab extends PluginSettingTab {
 }
 
 // For tests.
-export { analyse };
+export { analyse, inMathsLine };

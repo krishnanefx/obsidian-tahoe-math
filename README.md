@@ -1,8 +1,12 @@
 # Tahoe Math
 
-Type an expression ending in `=` and the answer appears right after it, as you type. Define variables and functions, mix units, convert, work out percentages, money and dates, all inside ordinary notes.
+**A calculator in your notes.** Type an expression ending in `=` and the answer appears right after it, as you type. No code block and no special syntax: it works in ordinary text.
 
-![Answers appearing after = in a note](images/answers.png)
+![Answers appearing after = as you type](images/demo.png)
+
+- `5 km + 300 m =` → **5.3 km**
+- `hotel = $135 * 3` then `flights + hotel =` → **$825.00**
+- `f(t) = t^2 + 1` then `f(4) =` → **17**
 
 ## What it understands
 
@@ -27,6 +31,7 @@ Variables and functions carry down the note, so later lines can use earlier ones
 - **Reading view** shows the answers too.
 - **Only where you want it:** turn on *Only in notes marked for maths* in the settings, then add `math: true` to the properties of the notes that should show answers.
 - **Precision:** choose how many significant digits answers show.
+- **Multiplication just works:** Obsidian normally pairs a typed `*` for italics; in a line of maths, Tahoe Math keeps it a single `*`.
 
 It uses nothing desktop-only, so it runs in Obsidian on phones and tablets too.
 
@@ -39,6 +44,11 @@ With the companion plugin Tahoe Intelligence (Mac only, not in the community dir
 - **No network use.** Tahoe Math works entirely offline.
 - **No files outside your vault.** Its settings, and any plain-English rewrites, are saved in the plugin's own data in your vault.
 - **No telemetry, ads, accounts or payments.**
+
+## More from Tahoe
+
+- **[Tahoe Run](https://github.com/krishnanefx/obsidian-tahoe-run):** run the code blocks in your notes, like a notebook: Python with a debugger and variables view, MATLAB, and ~25 other languages.
+- **[Tahoe](https://github.com/krishnanefx/obsidian-tahoe-theme):** a clean, Mac-like theme.
 
 ## Credits
 
