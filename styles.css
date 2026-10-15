@@ -1,0 +1,40 @@
+/* Tahoe Math — results read like Apple Notes' Math Notes: accent-coloured, after the "=". */
+
+.tahoe-math-result {
+  color: var(--text-accent);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.12s;
+}
+
+.tahoe-math-result:hover {
+  background-color: color-mix(in srgb, var(--interactive-accent) 14%, transparent);
+}
+
+.markdown-rendered .tahoe-math-result {
+  cursor: default;
+}
+
+.markdown-rendered .tahoe-math-result:hover {
+  background-color: transparent;
+}
+
+.tahoe-math-examples pre {
+  margin: 8px 0 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--code-background, var(--background-primary-alt));
+  font-size: 12.5px;
+}
+
+/* Worked out from a question in words: a faint sparkle shows it was interpreted. */
+.tahoe-math-spark {
+  font-weight: 400;
+  font-size: 0.85em;
+  background: linear-gradient(135deg, #0a84ff, #bf5af2 45%, #ff375f 75%, #ff9f0a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
