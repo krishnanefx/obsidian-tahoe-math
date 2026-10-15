@@ -81,7 +81,10 @@ const HOLIDAYS = {
 
 // past: a date without a year is the most recent one ("since Sep 1"); otherwise the next one.
 function parseDate(input, past = false) {
-  const p = String(input == null ? "" : input).toLowerCase().replace(/[’'.]/g, "").replace(/^(?:the|my|our|this|next)\s+/, "").replace(/\s+/g, " ").trim();
+  const raw = String(input == null ? "" : input).toLowerCase().replace(/[’'.]/g, "").replace(/\s+/g, " ").trim();
+  // "next Thursday" on a Thursday is a week away; "next week" is next Monday.
+  const isNext = /^(?:the |my |our |this )?next\b/.test(raw);
+  const p = raw.replace(/^(?:the|my|our|this|next)\s+/, "").replace(/^next\s+/, "");
   const base = startOfToday();
   const add = (n) => new Date(base.getFullYear(), base.getMonth(), base.getDate() + n);
   let m;
@@ -122,11 +125,11 @@ function parseDate(input, past = false) {
         return add(-back);
       }
       let ahead = (i - base.getDay() + 7) % 7;
-      if (ahead === 0 && /\bnext\b/.test(p)) ahead = 7;
+      if (ahead === 0 && (isNext || /\bnext\b/.test(p))) ahead = 7;
       return add(ahead);
     }
   }
-  if (/\bnext week\b/.test(p)) return add(((8 - base.getDay()) % 7) || 7);
+  if (/\bnext week\b/.test(p) || (isNext && p === "week")) return add(((8 - base.getDay()) % 7) || 7);
   throw new Error(`Not a date: ${input}`);
 }
 
@@ -172,6 +175,7 @@ function setUp(math) {
       derivative: disabled("derivative"),
       compile: disabled("compile"),
       resolve: disabled("resolve"),
+      reviver: disabled("reviver"),
     },
     { override: true }
   );
@@ -259,7 +263,7 @@ function preprocess(expr) {
     .replace(/(\d),(?=\d{3}\b)/g, "$1"); // 1,234 → 1234
   // "20% of 80" → 0.2 * (80)
   e = e.replace(/(\d+(?:\.\d+)?)\s*%\s*of\s+/gi, "($1/100) * ");
-  // "80 + 15%" → 80 * (1 + 0.15)   (Apple Notes and calculators work this way)
+  // "80 + 15%" → 80 * (1 + 0.15)   (the way calculators treat it)
   e = e.replace(/^(.+?)\s*([+-])\s*(\d+(?:\.\d+)?)\s*%\s*$/, (_, base, op, pct) => `(${base}) * (1 ${op} ${pct}/100)`);
   // any other "15%" → 0.15
   e = e.replace(/(\d+(?:\.\d+)?)\s*%/g, "($1/100)");
@@ -283,7 +287,9 @@ function formatValue(value, { currency, precision }) {
     if (currency) return `${currency}${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     const abs = Math.abs(value);
     if (abs !== 0 && (abs >= 1e15 || abs < 1e-6)) return math.format(value, { notation: "exponential", precision: 6 });
-    return value.toLocaleString(undefined, { maximumSignificantDigits: Math.min(precision + 2, 21), maximumFractionDigits: precision });
+    // Significant digits, but never fewer than the whole-number part has.
+    const whole = abs >= 1 ? Math.floor(Math.log10(abs)) + 1 : 1;
+    return value.toLocaleString(undefined, { maximumSignificantDigits: Math.max(1, Math.min(Math.max(precision, whole), 21)) });
   }
   if (value && typeof value === "object") {
     if (value.isUnit) {
@@ -414,9 +420,16 @@ function analyse(lines, settings) {
           if (!r.ok && !saved) results.unresolved.push({ line: n, expr, variables: Object.keys(scope).filter((k) => typeof scope[k] !== "function"), scope: Object.assign({}, scope) });
         }
       } else r = evaluateTail(expr, scope);
+      // A definition's currency is its right-hand side's ("a = 7 =" after "a = $5" is 7).
+      const shown = def ? currencyIn(def[2]) : currency;
       if (r.ok) {
-        const text = formatValue(r.value, { currency: currency || currencyIn(interpreted || ""), precision: settings.precision });
+        const text = formatValue(r.value, { currency: shown || currencyIn(interpreted || ""), precision: settings.precision });
         if (text != null) results.push({ line: n, from: lineStart, to: lineStart + eqIndex + 1, lineEnd: lineStart + raw.length, text, interpreted });
+        if (def) {
+          const name = def[1].replace(/\(.*$/, "");
+          if (shown) currencyOf[name] = shown;
+          else delete currencyOf[name];
+        }
       }
       continue;
     }
@@ -586,16 +599,24 @@ export default class TahoeMathPlugin extends Plugin {
     this.addCommand({
       id: "insert-results",
       name: "Write all answers into this note",
-      editorCallback: async (editor) => {
-        await loadEngine();
-        const lines = editor.getValue().split("\n");
-        const results = analyse(lines, this.settings).filter((r) => !lines[r.line].slice(r.to - offsetOf(lines, r.line)).trim());
-        for (const r of results.reverse()) {
-          const text = lines[r.line];
-          editor.replaceRange(`${/\s$/.test(text) ? "" : " "}${r.text}`, { line: r.line, ch: text.length });
-        }
+      editorCheckCallback: (checking, editor) => {
+        // Off, or not this note (only notes with math: true): nothing to write.
+        if (!editor.cm || !this.activeForState(editor.cm.state)) return false;
+        if (!checking) this.writeAnswers(editor);
+        return true;
       },
     });
+  }
+
+  // The answers become text, after each line's "=".
+  async writeAnswers(editor) {
+    await loadEngine();
+    const lines = editor.getValue().split("\n");
+    const results = analyse(lines, this.settings).filter((r) => !lines[r.line].slice(r.to - offsetOf(lines, r.line)).trim());
+    for (const r of results.reverse()) {
+      const text = lines[r.line];
+      editor.replaceRange(`${/\s$/.test(text) ? "" : " "}${r.text}`, { line: r.line, ch: text.length });
+    }
   }
 
   /* ---------- plain English, via Tahoe Intelligence (on the Mac) ---------- */
@@ -748,7 +769,7 @@ class TahoeMathSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Precision")
-      .setDesc("Significant digits shown in results.")
+      .setDesc("Significant digits in answers; whole numbers are never rounded. Unit conversions show at most 5, and money always shows cents.")
       .addDropdown((d) => {
         for (const v of ["4", "6", "8", "10", "14"]) d.addOption(v, v);
         d.setValue(String(s.precision)).onChange(async (v) => ((s.precision = Number(v)), await this.plugin.saveSettings()));

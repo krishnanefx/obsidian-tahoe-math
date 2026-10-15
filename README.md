@@ -30,7 +30,7 @@ Variables and functions carry down the note, so later lines can use earlier ones
 - **Write every answer in at once:** run *Write all answers into this note* from the command palette.
 - **Reading view** shows the answers too.
 - **Only where you want it:** turn on *Only in notes marked for maths* in the settings, then add `math: true` to the properties of the notes that should show answers.
-- **Precision:** choose how many significant digits answers show.
+- **Precision:** choose how many significant digits answers show (whole numbers are never rounded; unit conversions show at most 5, money always shows cents).
 - **Multiplication just works:** Obsidian normally pairs a typed `*` for italics; in a line of maths, Tahoe Math keeps it a single `*`.
 
 It uses nothing desktop-only, so it runs in Obsidian on phones and tablets too.

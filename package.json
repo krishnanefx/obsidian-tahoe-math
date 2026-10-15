@@ -1,6 +1,6 @@
 {
   "name": "obsidian-tahoe-math",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Answers as you type in Obsidian: expressions ending in = with variables, functions, units, conversions, percentages, currency and dates.",
   "private": true,
   "license": "MIT",
