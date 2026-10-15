@@ -52,10 +52,10 @@ Tahoe is a set of plugins and a theme that work on their own and fit together.
 
 | | | |
 | --- | --- | --- |
-| **[Tahoe Run](https://github.com/krishnanefx/obsidian-tahoe-run)** | Run the code in your notes, like a notebook: Python with a debugger and variables view, MATLAB, and ~25 other languages. | in the community directory |
+| **[Tahoe Run](https://github.com/krishnanefx/obsidian-tahoe-run)** | Run the code in your notes, like a notebook: Python with a debugger and variables view, MATLAB, and ~25 other languages. | available |
 | **Tahoe Math** | A calculator in your notes: type an expression ending in `=` and the answer appears. | this one |
-| **[Tahoe](https://github.com/krishnanefx/obsidian-tahoe-theme)** | A clean, Mac-like theme, in light and dark. | in the community directory |
-| **Tahoe Code** | An IDE in your code blocks: suggestions, checking as you type, quick fixes, go to definition, formatting and AI edits. | coming soon |
+| **[Tahoe](https://github.com/krishnanefx/obsidian-tahoe-theme)** | A clean, Mac-like theme, in light and dark. | available |
+| **[Tahoe Code](https://github.com/krishnanefx/obsidian-tahoe-code)** | An IDE in your code blocks: suggestions, checking as you type, quick fixes, go to definition, formatting and AI edits. | available |
 | **Tahoe Glass** | Real refraction for the Tahoe theme's glass, and System Settings–style settings pages. | coming soon |
 | **Tahoe Organize** | Keep a growing vault tidy: inbox triage, Smart Folders, coloured tags, link suggestions, vault health and text from images. | coming soon |
 | **Tahoe Intelligence** | On-device AI for your notes: related notes, distilling permanent notes, Writing Tools and more. | coming soon |
