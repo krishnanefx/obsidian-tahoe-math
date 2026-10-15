@@ -58,11 +58,11 @@ Tahoe is a set of plugins and a theme that work on their own and fit together.
 | **[Tahoe Code](https://github.com/krishnanefx/obsidian-tahoe-code)** | An IDE in your code blocks: suggestions, checking as you type, quick fixes, go to definition, formatting and AI edits. | available |
 | **Tahoe Glass** | Real refraction for the Tahoe theme's glass, and System Settings–style settings pages. | coming soon |
 | **[Tahoe Organize](https://github.com/krishnanefx/obsidian-tahoe-organize)** | Keep a growing vault tidy: inbox triage, smart folders, colored tags, link suggestions, vault health, literature notes and text from images. | available |
-| **Tahoe Intelligence** | On-device AI for your notes: ask your notes, related notes, distilling permanent notes and more. | coming soon |
+| **[Tahoe Intelligence](https://github.com/krishnanefx/obsidian-tahoe-intelligence)** | On-device AI for your notes: ask your notes, related notes, distilling permanent notes and more. | available |
 
 **Better together**
 
-- **With Tahoe Intelligence (coming soon):** ask in words: `days until Oct 14 =` or `20% tip on $86 split 3 ways =`. An on-device model turns the question into a calculation, and Tahoe Math works it out exactly.
+- **With [Tahoe Intelligence](https://github.com/krishnanefx/obsidian-tahoe-intelligence):** ask in words: `days until Oct 14 =` or `20% tip on $86 split 3 ways =`. An on-device model turns the question into a calculation, and Tahoe Math works it out exactly.
 - **With [Tahoe Run](https://github.com/krishnanefx/obsidian-tahoe-run):** when a calculation outgrows a line, a Python block in the same note picks up from there, with variables that carry across blocks.
 - **With [Tahoe](https://github.com/krishnanefx/obsidian-tahoe-theme):** answers take your accent colour, in Tahoe or any theme.
 <!-- /tahoe-family -->
