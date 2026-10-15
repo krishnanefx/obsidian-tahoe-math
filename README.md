@@ -45,10 +45,27 @@ With the companion plugin Tahoe Intelligence (Mac only, not in the community dir
 - **No files outside your vault.** Its settings, and any plain-English rewrites, are saved in the plugin's own data in your vault.
 - **No telemetry, ads, accounts or payments.**
 
-## More from Tahoe
+<!-- tahoe-family -->
+## The Tahoe family
 
-- **[Tahoe Run](https://github.com/krishnanefx/obsidian-tahoe-run):** run the code blocks in your notes, like a notebook: Python with a debugger and variables view, MATLAB, and ~25 other languages.
-- **[Tahoe](https://github.com/krishnanefx/obsidian-tahoe-theme):** a clean, Mac-like theme.
+Tahoe is a set of plugins and a theme that work on their own and fit together.
+
+| | | |
+| --- | --- | --- |
+| **[Tahoe Run](https://github.com/krishnanefx/obsidian-tahoe-run)** | Run the code in your notes, like a notebook: Python with a debugger and variables view, MATLAB, and ~25 other languages. | in the community directory |
+| **Tahoe Math** | A calculator in your notes: type an expression ending in `=` and the answer appears. | this one |
+| **[Tahoe](https://github.com/krishnanefx/obsidian-tahoe-theme)** | A clean, Mac-like theme, in light and dark. | in the community directory |
+| **Tahoe Code** | An IDE in your code blocks: suggestions, checking as you type, quick fixes, go to definition, formatting and AI edits. | coming soon |
+| **Tahoe Glass** | Real refraction for the Tahoe theme's glass, and System Settings–style settings pages. | coming soon |
+| **Tahoe Organize** | Keep a growing vault tidy: inbox triage, Smart Folders, coloured tags, link suggestions, vault health and text from images. | coming soon |
+| **Tahoe Intelligence** | On-device AI for your notes: related notes, distilling permanent notes, Writing Tools and more. | coming soon |
+
+**Better together**
+
+- **With Tahoe Intelligence (coming soon):** ask in words: `days until Oct 14 =` or `20% tip on $86 split 3 ways =`. An on-device model turns the question into a calculation, and Tahoe Math works it out exactly.
+- **With [Tahoe Run](https://github.com/krishnanefx/obsidian-tahoe-run):** when a calculation outgrows a line, a Python block in the same note picks up from there, with variables that carry across blocks.
+- **With [Tahoe](https://github.com/krishnanefx/obsidian-tahoe-theme):** answers take your accent colour, in Tahoe or any theme.
+<!-- /tahoe-family -->
 
 ## Credits
 
