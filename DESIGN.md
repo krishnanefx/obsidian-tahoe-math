@@ -109,4 +109,6 @@ The tests live in my development repository, not in this one:
 - The Obsidian scenarios (a hidden test copy of Obsidian driven over its remote-debugging port) only check that Tahoe Math is enabled.
 - `perf.py` measures what each plugin costs by turning them off one at a time, and Tahoe Math is one of them.
 
-There are no tests for Reading view, the Tab key or the date parser.
+- `tests/unit/math.test.cjs` checks precision (significant digits, whole numbers kept, units at most 5, money in cents), the currency of definitions that show their value, `next week` and `next <weekday>`, and that note text can't call math.js's evaluator, parser, compiler, `import`, `reviver` or `createUnit`.
+
+There are no tests for Reading view or the Tab key, and the date parser is only partly covered.
