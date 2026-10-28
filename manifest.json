@@ -1,9 +1,9 @@
 {
   "id": "tahoe-math",
   "name": "Tahoe Math",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "minAppVersion": "1.5.0",
-  "description": "A calculator in your notes: type an expression ending in = and the answer appears as you type, with variables, functions, units, conversions, percentages, currency and dates.",
+  "description": "A calculator in your notes: type an expression ending in = and the answer appears as you type. Variables, functions, unit conversion, percentages, currency and dates.",
   "author": "Krishnan Adaikkappan",
   "authorUrl": "https://github.com/krishnanefx",
   "isDesktopOnly": false

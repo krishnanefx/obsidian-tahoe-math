@@ -15,7 +15,7 @@
  * line) to write it into the note. Works on Mac, iPhone and iPad.
  */
 
-import { Plugin, PluginSettingTab, Setting, editorInfoField } from "obsidian";
+import { Platform, Plugin, PluginSettingTab, Setting, editorInfoField } from "obsidian";
 import { ViewPlugin, Decoration, WidgetType, keymap } from "@codemirror/view";
 import { EditorState, Prec, RangeSetBuilder } from "@codemirror/state";
 
@@ -776,7 +776,7 @@ class TahoeMathSettingTab extends PluginSettingTab {
       });
 
     const hasAI = !!this.app.plugins.getPlugin("tahoe-intelligence");
-    new Setting(containerEl)
+    const words = new Setting(containerEl)
       .setName("Questions in words")
       .setDesc(
         hasAI
@@ -784,11 +784,16 @@ class TahoeMathSettingTab extends PluginSettingTab {
           : "Needs Tahoe Intelligence on your Mac. Questions already worked out there still show here."
       )
       .addToggle((t) => t.setValue(s.plainEnglish).onChange(async (v) => ((s.plainEnglish = v), await this.plugin.saveSettings())));
+    if (!hasAI && Platform.isDesktop) {
+      words.descEl.appendText(" ");
+      words.descEl.createEl("a", { text: "Get it", href: "obsidian://show-plugin?id=tahoe-intelligence" });
+    }
 
     const examples = containerEl.createDiv({ cls: "tahoe-math-examples" });
     examples.createEl("div", { cls: "setting-item-name", text: "Try it" });
     const pre = examples.createEl("pre");
     pre.setText(["rent = 1800", "people = 3", "rent / people =", "", "5 km + 300 m =", "3 ft to cm =", "20% of 80 =", "$12.50 * 4 =", "f(t) = t^2 + 1", "f(4) =", "", 'daysUntil("Oct 14") =', "days until Oct 14 ="].join("\n"));
+    containerEl.createDiv({ cls: "tahoe-source-link" }).createEl("a", { text: "Source, issues and ideas on GitHub", href: "https://github.com/krishnanefx/obsidian-tahoe-math" });
   }
 }
 

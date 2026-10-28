@@ -37,7 +37,23 @@ It uses nothing desktop-only, so it runs in Obsidian on phones and tablets too.
 
 ### Questions in plain English (optional)
 
-With the companion plugin Tahoe Intelligence (Mac only, not in the community directory yet), you can also type questions like `days until Oct 14 =` or `20% tip on $86 split 3 ways =`. An on-device model rewrites the question as a calculation, and Tahoe Math works it out exactly. These answers are marked with ✦. Without Tahoe Intelligence, everything else works as normal.
+With the companion plugin [Tahoe Intelligence](https://github.com/krishnanefx/obsidian-tahoe-intelligence) (Mac only), you can also type questions like `days until Oct 14 =` or `20% tip on $86 split 3 ways =`. An on-device model rewrites the question as a calculation, and Tahoe Math works it out exactly. These answers are marked with ✦. Without Tahoe Intelligence, everything else works as normal.
+
+## Coming from Numerals
+
+[Numerals](https://github.com/gtg922r/obsidian-numerals) and Tahoe Math both use math.js, and both work on phones and tablets. The main difference is where the maths lives: Numerals works in ```` ```math ```` blocks and in inline code like `` `#: 3ft * 4ft` ``, while Tahoe Math works on ordinary lines of text that end in `=`.
+
+**The same:** units and conversions (`72 degF to degC`), variables, your own functions, currency symbols, answers in Reading view.
+
+**Different:**
+
+- Tahoe Math skips code blocks, so it doesn't read Numerals' ```` ```math ```` blocks or `#:` inline code. To switch a calculation, move it out of the block and end the line with `=`.
+- Variables in Tahoe Math carry down the whole note. In Numerals they stay in their block unless you name them with `$`.
+- Numerals treats a currency as a unit (`7,200 USD`). Tahoe Math keeps the symbol you typed and shows cents (`$50.00`).
+
+**Numerals does things Tahoe Math doesn't:** `@total`, `@sum` and `@prev`; values from frontmatter, Dataview and other notes; writing results back as Dataview fields; TeX and highlighted render styles; a choice of layouts and number formats; and autocomplete.
+
+**Side by side:** Numerals works inside its blocks and `#:` code, and Tahoe Math on plain lines, so each leaves the other's text alone.
 
 ## Disclosures
 
@@ -66,6 +82,10 @@ Tahoe is a set of plugins and a theme that work on their own and fit together.
 - **With [Tahoe Run](https://github.com/krishnanefx/obsidian-tahoe-run):** when a calculation outgrows a line, a Python block in the same note picks up from there, with variables that carry across blocks.
 - **With [Tahoe](https://github.com/krishnanefx/obsidian-tahoe-theme):** answers take your accent colour, in Tahoe or any theme.
 <!-- /tahoe-family -->
+
+## Feedback
+
+Questions are welcome in [Discussions](https://github.com/krishnanefx/obsidian-tahoe-math/discussions), and bugs and ideas in [Issues](https://github.com/krishnanefx/obsidian-tahoe-math/issues/new/choose). If Tahoe Math is useful to you, a star helps others find it.
 
 ## Credits
 
