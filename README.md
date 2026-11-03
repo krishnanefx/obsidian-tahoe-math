@@ -27,6 +27,7 @@ Variables and functions carry down the note, so later lines can use earlier ones
 
 - **Answers show as you type.** Nothing is written into your note until you want it.
 - **Keep an answer:** click it, or press Tab at the end of the line, and it's written in.
+- **Use the answer above:** `prev` is the last answer in the note, so `2 * 21 =` then `prev + 8 =` gives **50**. If your note defines its own `prev`, that one is used.
 - **Write every answer in at once:** run *Write all answers into this note* from the command palette.
 - **Reading view** shows the answers too.
 - **Only where you want it:** turn on *Only in notes marked for maths* in the settings, then add `math: true` to the properties of the notes that should show answers.

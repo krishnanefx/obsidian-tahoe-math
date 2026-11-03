@@ -362,6 +362,7 @@ function analyse(lines, settings) {
   let inMath = false;
   let inFrontmatter = lines[0] && lines[0].trim() === "---";
   let offset = 0;
+  let ownPrev = false; // the note defines its own "prev"
 
   for (let n = 0; n < lines.length; n++) {
     const raw = lines[n];
@@ -425,6 +426,14 @@ function analyse(lines, settings) {
       if (r.ok) {
         const text = formatValue(r.value, { currency: shown || currencyIn(interpreted || ""), precision: settings.precision });
         if (text != null) results.push({ line: n, from: lineStart, to: lineStart + eqIndex + 1, lineEnd: lineStart + raw.length, text, interpreted });
+        if (def && def[1].replace(/\(.*$/, "") === "prev") ownPrev = true;
+        // "prev" is the answer above, unless the note defines its own.
+        if (!ownPrev && text != null) {
+          scope.prev = r.value;
+          const sym = shown || currencyIn(interpreted || "");
+          if (sym) currencyOf.prev = sym;
+          else delete currencyOf.prev;
+        }
         if (def) {
           const name = def[1].replace(/\(.*$/, "");
           if (shown) currencyOf[name] = shown;
@@ -438,6 +447,7 @@ function analyse(lines, settings) {
     const def = DEFINITION.exec(body.trim());
     if (def && tryEvaluate(body.trim(), scope).ok) {
       const name = def[1].replace(/\(.*$/, "");
+      if (name === "prev") ownPrev = true;
       const sym = currencyIn(def[2]);
       if (sym) currencyOf[name] = sym;
       else delete currencyOf[name];
