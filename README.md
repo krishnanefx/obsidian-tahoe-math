@@ -4,7 +4,7 @@
 
 **Install:** in Obsidian, open Settings → Community plugins → Browse, search for “Tahoe Math”, then Install and Enable. ([Directory page](https://community.obsidian.md/plugins/tahoe-math))
 
-![Answers appearing after = as you type](images/demo.png)
+![Answers appearing after = as you type](images/demo.gif)
 
 - `5 km + 300 m =` → **5.3 km**
 - `flights = $420`, `hotel = $135 * 3`, then `flights + hotel =` → **$825.00**
