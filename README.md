@@ -2,6 +2,8 @@
 
 **A calculator in your notes.** Type an expression ending in `=` and the answer appears right after it, as you type. No code block and no special syntax: it works in ordinary text.
 
+**Install:** in Obsidian, open Settings → Community plugins → Browse, search for “Tahoe Math”, then Install and Enable. ([Directory page](https://community.obsidian.md/plugins/tahoe-math))
+
 ![Answers appearing after = as you type](images/demo.png)
 
 - `5 km + 300 m =` → **5.3 km**

@@ -186,6 +186,7 @@ const DEFAULT_SETTINGS = {
   enabled: true,
   onlyTagged: false, // only notes with `math: true` in their properties
   precision: 10,
+  hideInReading: false, // no answers in Reading view
   plainEnglish: true, // "days until Oct 14 =" with Tahoe Intelligence
   words: {}, // question → expression, from Tahoe Intelligence (synced, so iPhone shows answers too)
 };
@@ -714,7 +715,7 @@ export default class TahoeMathPlugin extends Plugin {
 
   // Reading view: results after "=" in paragraphs and list items.
   async decorateReadingView(el, ctx) {
-    if (!this.settings.enabled) return;
+    if (!this.settings.enabled || this.settings.hideInReading) return;
     if (!el.textContent.includes("=")) return;
     const file = this.app.vault.getAbstractFileByPath(ctx.sourcePath);
     if (!file || file.extension !== "md") return;
@@ -784,6 +785,11 @@ class TahoeMathSettingTab extends PluginSettingTab {
         for (const v of ["4", "6", "8", "10", "14"]) d.addOption(v, v);
         d.setValue(String(s.precision)).onChange(async (v) => ((s.precision = Number(v)), await this.plugin.saveSettings()));
       });
+
+    new Setting(containerEl)
+      .setName("Hide answers in Reading view")
+      .setDesc("Answers still show while you edit.")
+      .addToggle((t) => t.setValue(s.hideInReading).onChange(async (v) => ((s.hideInReading = v), await this.plugin.saveSettings())));
 
     const hasAI = !!this.app.plugins.getPlugin("tahoe-intelligence");
     const words = new Setting(containerEl)
