@@ -186,6 +186,7 @@ const DEFAULT_SETTINGS = {
   enabled: true,
   onlyTagged: false, // only notes with `math: true` in their properties
   precision: 10,
+  answerColor: "", // empty: the theme's accent colour
   hideInReading: false, // no answers in Reading view
   plainEnglish: true, // "days until Oct 14 =" with Tahoe Intelligence
   words: {}, // question → expression, from Tahoe Intelligence (synced, so iPhone shows answers too)
@@ -603,6 +604,7 @@ export default class TahoeMathPlugin extends Plugin {
     // Drop saved rewrites from before the checks above.
     const words = this.settings.words || {};
     for (const [q, expr] of Object.entries(words)) if (!grounded(q, expr) || ruleRewrite(q)) delete words[q];
+    this.applySettings();
     this.addSettingTab(new TahoeMathSettingTab(this.app, this));
     this.registerEditorExtension([mathPlugin(this), acceptKeymap(this), singleStar(this)]);
     this.registerMarkdownPostProcessor((el, ctx) => this.decorateReadingView(el, ctx));
@@ -617,6 +619,16 @@ export default class TahoeMathPlugin extends Plugin {
         return true;
       },
     });
+  }
+
+  // Settings the page picks up.
+  applySettings() {
+    if (this.settings.answerColor) document.body.style.setProperty("--tahoe-math-answer", this.settings.answerColor);
+    else document.body.style.removeProperty("--tahoe-math-answer");
+  }
+
+  onunload() {
+    document.body.style.removeProperty("--tahoe-math-answer");
   }
 
   // The answers become text, after each line's "=".
@@ -785,6 +797,19 @@ class TahoeMathSettingTab extends PluginSettingTab {
         for (const v of ["4", "6", "8", "10", "14"]) d.addOption(v, v);
         d.setValue(String(s.precision)).onChange(async (v) => ((s.precision = Number(v)), await this.plugin.saveSettings()));
       });
+
+    new Setting(containerEl)
+      .setName("Answer colour")
+      .setDesc("The theme's accent colour unless you pick one.")
+      .addColorPicker((c) => c.setValue(s.answerColor || "#0a84ff").onChange(async (v) => ((s.answerColor = v), this.plugin.applySettings(), await this.plugin.saveSettings())))
+      .addExtraButton((b) =>
+        b.setIcon("rotate-ccw").setTooltip("Use the accent colour").onClick(async () => {
+          s.answerColor = "";
+          this.plugin.applySettings();
+          await this.plugin.saveSettings();
+          this.display();
+        })
+      );
 
     new Setting(containerEl)
       .setName("Hide answers in Reading view")

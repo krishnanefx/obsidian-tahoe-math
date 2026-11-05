@@ -1,7 +1,7 @@
 /* Tahoe Math — answers in the accent colour, after the "=". */
 
 .tahoe-math-result {
-  color: var(--text-accent);
+  color: var(--tahoe-math-answer, var(--text-accent));
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
