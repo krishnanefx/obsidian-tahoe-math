@@ -186,6 +186,7 @@ const DEFAULT_SETTINGS = {
   enabled: true,
   onlyTagged: false, // only notes with `math: true` in their properties
   precision: 10,
+  thousands: true, // 1,234,567 rather than 1234567
   answerColor: "", // empty: the theme's accent colour
   hideInReading: false, // no answers in Reading view
   plainEnglish: true, // "days until Oct 14 =" with Tahoe Intelligence
@@ -279,32 +280,33 @@ function pluralUnits(text) {
   return text.replace(/^(-?[\d.,]+(?:e[+-]?\d+)?) (second|minute|hour|day|week|month|year)$/, (m, n, u) => (Number(n.replace(/,/g, "")) === 1 ? m : `${n} ${u}s`));
 }
 
-function formatValue(value, { currency, precision }) {
+function formatValue(value, { currency, precision, thousands }) {
+  const useGrouping = thousands !== false;
   if (value == null) return null;
   if (typeof value === "function") return null;
   if (typeof value === "string") return value.length <= 80 ? value : null;
   if (typeof value === "boolean") return value ? "true" : "false";
   if (typeof value === "number") {
     if (!isFinite(value)) return null;
-    if (currency) return `${currency}${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (currency) return `${currency}${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping })}`;
     const abs = Math.abs(value);
     if (abs !== 0 && (abs >= 1e15 || abs < 1e-6)) return math.format(value, { notation: "exponential", precision: 6 });
     // Significant digits, but never fewer than the whole-number part has.
     const whole = abs >= 1 ? Math.floor(Math.log10(abs)) + 1 : 1;
-    return value.toLocaleString(undefined, { maximumSignificantDigits: Math.max(1, Math.min(Math.max(precision, whole), 21)) });
+    return value.toLocaleString(undefined, { maximumSignificantDigits: Math.max(1, Math.min(Math.max(precision, whole), 21)), useGrouping });
   }
   if (value && typeof value === "object") {
     if (value.isUnit) {
       // "6.048e+5 seconds" → "604,800 seconds" (exponents only for huge or tiny values)
       const text = math.format(value, { precision: Math.min(precision, 5) }).replace(/^(-?\d+(?:\.\d+)?e[+-]?\d+)(?= )/, (n) => {
         const x = Number(n);
-        return Math.abs(x) < 1e15 && Math.abs(x) >= 1e-6 ? x.toLocaleString(undefined, { maximumSignificantDigits: Math.min(precision, 8) }) : n;
+        return Math.abs(x) < 1e15 && Math.abs(x) >= 1e-6 ? x.toLocaleString(undefined, { maximumSignificantDigits: Math.min(precision, 8), useGrouping }) : n;
       });
       return pluralUnits(text);
     }
     if (value.isComplex || value.isFraction || value.isBigNumber) return math.format(value, { precision });
     if (value.isMatrix || Array.isArray(value)) return math.format(value, { precision });
-    if (value.isResultSet) return formatValue(value.entries[value.entries.length - 1], { currency, precision });
+    if (value.isResultSet) return formatValue(value.entries[value.entries.length - 1], { currency, precision, thousands });
   }
   return null;
 }
@@ -426,7 +428,7 @@ function analyse(lines, settings) {
       // A definition's currency is its right-hand side's ("a = 7 =" after "a = $5" is 7).
       const shown = def ? currencyIn(def[2]) : currency;
       if (r.ok) {
-        const text = formatValue(r.value, { currency: shown || currencyIn(interpreted || ""), precision: settings.precision });
+        const text = formatValue(r.value, { currency: shown || currencyIn(interpreted || ""), precision: settings.precision, thousands: settings.thousands });
         if (text != null) results.push({ line: n, from: lineStart, to: lineStart + eqIndex + 1, lineEnd: lineStart + raw.length, text, interpreted });
         if (def && def[1].replace(/\(.*$/, "") === "prev") ownPrev = true;
         // "prev" is the answer above, unless the note defines its own.
@@ -797,6 +799,11 @@ class TahoeMathSettingTab extends PluginSettingTab {
         for (const v of ["4", "6", "8", "10", "14"]) d.addOption(v, v);
         d.setValue(String(s.precision)).onChange(async (v) => ((s.precision = Number(v)), await this.plugin.saveSettings()));
       });
+
+    new Setting(containerEl)
+      .setName("Thousands separators")
+      .setDesc("Show 1,234,567 rather than 1234567.")
+      .addToggle((t) => t.setValue(s.thousands).onChange(async (v) => ((s.thousands = v), await this.plugin.saveSettings())));
 
     new Setting(containerEl)
       .setName("Answer colour")
