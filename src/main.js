@@ -187,6 +187,7 @@ const DEFAULT_SETTINGS = {
   onlyTagged: false, // only notes with `math: true` in their properties
   precision: 10,
   thousands: true, // 1,234,567 rather than 1234567
+  sciExponent: 15, // switch to scientific notation from 10^this
   answerColor: "", // empty: the theme's accent colour
   hideInReading: false, // no answers in Reading view
   plainEnglish: true, // "days until Oct 14 =" with Tahoe Intelligence
@@ -280,7 +281,7 @@ function pluralUnits(text) {
   return text.replace(/^(-?[\d.,]+(?:e[+-]?\d+)?) (second|minute|hour|day|week|month|year)$/, (m, n, u) => (Number(n.replace(/,/g, "")) === 1 ? m : `${n} ${u}s`));
 }
 
-function formatValue(value, { currency, precision, thousands }) {
+function formatValue(value, { currency, precision, thousands, sciExponent }) {
   const useGrouping = thousands !== false;
   if (value == null) return null;
   if (typeof value === "function") return null;
@@ -290,7 +291,7 @@ function formatValue(value, { currency, precision, thousands }) {
     if (!isFinite(value)) return null;
     if (currency) return `${currency}${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping })}`;
     const abs = Math.abs(value);
-    if (abs !== 0 && (abs >= 1e15 || abs < 1e-6)) return math.format(value, { notation: "exponential", precision: 6 });
+    if (abs !== 0 && (abs >= 10 ** (Number(sciExponent) || 15) || abs < 1e-6)) return math.format(value, { notation: "exponential", precision: 6 });
     // Significant digits, but never fewer than the whole-number part has.
     const whole = abs >= 1 ? Math.floor(Math.log10(abs)) + 1 : 1;
     return value.toLocaleString(undefined, { maximumSignificantDigits: Math.max(1, Math.min(Math.max(precision, whole), 21)), useGrouping });
@@ -306,7 +307,7 @@ function formatValue(value, { currency, precision, thousands }) {
     }
     if (value.isComplex || value.isFraction || value.isBigNumber) return math.format(value, { precision });
     if (value.isMatrix || Array.isArray(value)) return math.format(value, { precision });
-    if (value.isResultSet) return formatValue(value.entries[value.entries.length - 1], { currency, precision, thousands });
+    if (value.isResultSet) return formatValue(value.entries[value.entries.length - 1], { currency, precision, thousands, sciExponent });
   }
   return null;
 }
@@ -428,7 +429,7 @@ function analyse(lines, settings) {
       // A definition's currency is its right-hand side's ("a = 7 =" after "a = $5" is 7).
       const shown = def ? currencyIn(def[2]) : currency;
       if (r.ok) {
-        const text = formatValue(r.value, { currency: shown || currencyIn(interpreted || ""), precision: settings.precision, thousands: settings.thousands });
+        const text = formatValue(r.value, { currency: shown || currencyIn(interpreted || ""), precision: settings.precision, thousands: settings.thousands, sciExponent: settings.sciExponent });
         if (text != null) results.push({ line: n, from: lineStart, to: lineStart + eqIndex + 1, lineEnd: lineStart + raw.length, text, interpreted });
         if (def && def[1].replace(/\(.*$/, "") === "prev") ownPrev = true;
         // "prev" is the answer above, unless the note defines its own.
@@ -804,6 +805,14 @@ class TahoeMathSettingTab extends PluginSettingTab {
       .setName("Thousands separators")
       .setDesc("Show 1,234,567 rather than 1234567.")
       .addToggle((t) => t.setValue(s.thousands).onChange(async (v) => ((s.thousands = v), await this.plugin.saveSettings())));
+
+    new Setting(containerEl)
+      .setName("Scientific notation from")
+      .setDesc("Very large answers switch to a form like 1.5e+12. Very small ones (under 0.000001) always do.")
+      .addDropdown((d) => {
+        for (const [v, label] of [["6", "A million"], ["9", "A billion"], ["12", "A trillion"], ["15", "A quadrillion (default)"]]) d.addOption(v, label);
+        d.setValue(String(s.sciExponent)).onChange(async (v) => ((s.sciExponent = Number(v)), await this.plugin.saveSettings()));
+      });
 
     new Setting(containerEl)
       .setName("Answer colour")
