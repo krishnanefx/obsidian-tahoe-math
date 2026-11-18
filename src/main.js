@@ -136,6 +136,12 @@ function parseDate(input, past = false) {
 const dayDiff = (a, b) => Math.round((b - a) / 86400000);
 const showDate = (d) => d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: d.getFullYear() === new Date().getFullYear() ? undefined : "numeric" });
 
+// Degrees or radians for sin, cos, tan and their inverses (a number without a unit).
+let angleUnit = "rad";
+export function setAngleUnit(unit) {
+  angleUnit = unit === "deg" ? "deg" : "rad";
+}
+
 function setUp(math) {
   // Everyday names mathjs doesn't know.
   math.createUnit({ pound: { definition: "1 lbm", aliases: ["pounds"] }, mph: "1 mi/hr", kph: { definition: "1 km/hr", aliases: ["kmh"] } });
@@ -158,6 +164,21 @@ function setUp(math) {
     },
     { override: true }
   );
+
+  // sin(90) is 1 in degrees mode; sin(90 rad) and sin(pi/2) still work either way.
+  const trig = {};
+  for (const name of ["sin", "cos", "tan", "sec", "csc", "cot"]) {
+    const original = math[name];
+    trig[name] = (x) => (typeof x === "number" && angleUnit === "deg" ? original((x * Math.PI) / 180) : original(x));
+  }
+  for (const name of ["asin", "acos", "atan", "acot", "asec", "acsc", "atan2"]) {
+    const original = math[name];
+    trig[name] = (...args) => {
+      const r = original(...args);
+      return typeof r === "number" && angleUnit === "deg" ? (r * 180) / Math.PI : r;
+    };
+  }
+  math.import(trig, { override: true });
 
   // Note text is user input: keep the evaluator to pure maths (mathjs's
   // recommended hardening — expressions can't reach these functions).
@@ -189,6 +210,7 @@ const DEFAULT_SETTINGS = {
   thousands: true, // 1,234,567 rather than 1234567
   sciExponent: 15, // switch to scientific notation from 10^this
   answerColor: "", // empty: the theme's accent colour
+  angleUnit: "rad", // "rad" or "deg"
   hideInReading: false, // no answers in Reading view
   plainEnglish: true, // "days until Oct 14 =" with Tahoe Intelligence
   words: {}, // question → expression, from Tahoe Intelligence (synced, so iPhone shows answers too)
@@ -624,8 +646,9 @@ export default class TahoeMathPlugin extends Plugin {
     });
   }
 
-  // Settings the page picks up.
+  // Settings that only the evaluator reads.
   applySettings() {
+    setAngleUnit(this.settings.angleUnit);
     if (this.settings.answerColor) document.body.style.setProperty("--tahoe-math-answer", this.settings.answerColor);
     else document.body.style.removeProperty("--tahoe-math-answer");
   }
@@ -812,6 +835,15 @@ class TahoeMathSettingTab extends PluginSettingTab {
       .addDropdown((d) => {
         for (const [v, label] of [["6", "A million"], ["9", "A billion"], ["12", "A trillion"], ["15", "A quadrillion (default)"]]) d.addOption(v, label);
         d.setValue(String(s.sciExponent)).onChange(async (v) => ((s.sciExponent = Number(v)), await this.plugin.saveSettings()));
+      });
+
+    new Setting(containerEl)
+      .setName("Angle unit")
+      .setDesc("What sin(90), cos(60) and the like mean for a plain number. With a unit, such as sin(90 deg), it never matters.")
+      .addDropdown((d) => {
+        d.addOption("rad", "Radians");
+        d.addOption("deg", "Degrees");
+        d.setValue(s.angleUnit).onChange(async (v) => ((s.angleUnit = v), this.plugin.applySettings(), await this.plugin.saveSettings(), this.plugin.refreshEditors()));
       });
 
     new Setting(containerEl)
