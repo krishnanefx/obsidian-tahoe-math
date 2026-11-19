@@ -15,7 +15,7 @@
  * line) to write it into the note. Works on Mac, iPhone and iPad.
  */
 
-import { Platform, Plugin, PluginSettingTab, Setting, editorInfoField } from "obsidian";
+import { Notice, Platform, Plugin, PluginSettingTab, Setting, editorInfoField } from "obsidian";
 import { ViewPlugin, Decoration, WidgetType, keymap } from "@codemirror/view";
 import { EditorState, Prec, RangeSetBuilder } from "@codemirror/state";
 
@@ -644,6 +644,17 @@ export default class TahoeMathPlugin extends Plugin {
         return true;
       },
     });
+
+    this.addCommand({
+      id: "toggle-note",
+      name: "Turn answers on or off in this note",
+      checkCallback: (checking) => {
+        const file = this.app.workspace.getActiveFile();
+        if (!file || file.extension !== "md") return false;
+        if (!checking) this.toggleNote(file);
+        return true;
+      },
+    });
   }
 
   // Settings that only the evaluator reads.
@@ -666,6 +677,16 @@ export default class TahoeMathPlugin extends Plugin {
       const text = lines[r.line];
       editor.replaceRange(`${/\s$/.test(text) ? "" : " "}${r.text}`, { line: r.line, ch: text.length });
     }
+  }
+
+  // Flips `math: true` in the note's properties (for "Only in notes marked for maths").
+  async toggleNote(file) {
+    let on = false;
+    await this.app.fileManager.processFrontMatter(file, (fm) => {
+      on = !(fm.math === true || fm.math === "true");
+      fm.math = on;
+    });
+    new Notice(on ? "Answers on in this note (math: true)." : "Answers off in this note (math: false).");
   }
 
   /* ---------- plain English, via Tahoe Intelligence (on the Mac) ---------- */
