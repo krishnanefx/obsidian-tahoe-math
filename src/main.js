@@ -655,6 +655,16 @@ export default class TahoeMathPlugin extends Plugin {
         return true;
       },
     });
+
+    this.addCommand({
+      id: "copy-answer",
+      name: "Copy the answer on this line",
+      editorCheckCallback: (checking, editor) => {
+        if (!editor.cm || !this.activeForState(editor.cm.state)) return false;
+        if (!checking) this.copyAnswer(editor);
+        return true;
+      },
+    });
   }
 
   // Settings that only the evaluator reads.
@@ -687,6 +697,19 @@ export default class TahoeMathPlugin extends Plugin {
       fm.math = on;
     });
     new Notice(on ? "Answers on in this note (math: true)." : "Answers off in this note (math: false).");
+  }
+
+  async copyAnswer(editor) {
+    await loadEngine();
+    const line = editor.getCursor().line;
+    const r = analyse(editor.getValue().split("\n"), this.settings).find((x) => x.line === line);
+    if (!r) return void new Notice("No answer on this line.");
+    try {
+      await navigator.clipboard.writeText(r.text);
+      new Notice(`Copied ${r.text}`);
+    } catch {
+      new Notice("Couldn't copy to the clipboard.");
+    }
   }
 
   /* ---------- plain English, via Tahoe Intelligence (on the Mac) ---------- */
