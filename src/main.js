@@ -483,6 +483,24 @@ function analyse(lines, settings) {
   return results;
 }
 
+// Answers already written after an "=" that are exactly what the calculator
+// gives for that line. Anything else typed there is left alone.
+function writtenAnswers(lines, settings) {
+  const cut = [];
+  const stripped = lines.map((raw, n) => {
+    const eq = raw.lastIndexOf("=");
+    if (eq < 1 || "=!<>".includes(raw[eq - 1]) || raw[eq + 1] === "=") return raw;
+    const tail = raw.slice(eq + 1).trim();
+    // "x = 12" is a definition, not a question with an answer.
+    const body = raw.slice((LINE_PREFIX.exec(raw) || ["", ""])[1].length).replace(/^#{1,6}\s+/, "").trim();
+    if (!tail || (DEFINITION.test(body) && body.indexOf("=") === body.lastIndexOf("="))) return raw;
+    cut.push({ line: n, ch: eq + 1, end: raw.length, tail });
+    return raw.slice(0, eq + 1);
+  });
+  const shownBy = new Map(analyse(stripped, settings).map((r) => [r.line, r.text]));
+  return cut.filter((c) => shownBy.get(c.line) === c.tail);
+}
+
 /* ------------------------------------------------------------------------ */
 /* Editor                                                                    */
 /* ------------------------------------------------------------------------ */
@@ -657,6 +675,16 @@ export default class TahoeMathPlugin extends Plugin {
     });
 
     this.addCommand({
+      id: "remove-results",
+      name: "Remove written answers from this note",
+      editorCheckCallback: (checking, editor) => {
+        if (!editor.cm || !this.activeForState(editor.cm.state)) return false;
+        if (!checking) this.removeAnswers(editor);
+        return true;
+      },
+    });
+
+    this.addCommand({
       id: "copy-answer",
       name: "Copy the answer on this line",
       editorCheckCallback: (checking, editor) => {
@@ -697,6 +725,13 @@ export default class TahoeMathPlugin extends Plugin {
       fm.math = on;
     });
     new Notice(on ? "Answers on in this note (math: true)." : "Answers off in this note (math: false).");
+  }
+
+  async removeAnswers(editor) {
+    await loadEngine();
+    const found = writtenAnswers(editor.getValue().split("\n"), this.settings);
+    for (const c of found.reverse()) editor.replaceRange("", { line: c.line, ch: c.ch }, { line: c.line, ch: c.end });
+    new Notice(found.length ? `Removed ${found.length} written answer${found.length === 1 ? "" : "s"}.` : "No written answers to remove.");
   }
 
   async copyAnswer(editor) {
@@ -931,4 +966,4 @@ class TahoeMathSettingTab extends PluginSettingTab {
 }
 
 // For tests.
-export { analyse, inMathsLine };
+export { analyse, inMathsLine, writtenAnswers };
