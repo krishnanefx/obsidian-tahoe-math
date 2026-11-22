@@ -15,7 +15,7 @@
  * line) to write it into the note. Works on Mac, iPhone and iPad.
  */
 
-import { Notice, Platform, Plugin, PluginSettingTab, Setting, editorInfoField } from "obsidian";
+import { Modal, Notice, Platform, Plugin, PluginSettingTab, Setting, editorInfoField } from "obsidian";
 import { ViewPlugin, Decoration, WidgetType, keymap } from "@codemirror/view";
 import { EditorState, Prec, RangeSetBuilder } from "@codemirror/state";
 
@@ -480,7 +480,22 @@ function analyse(lines, settings) {
       else delete currencyOf[name];
     }
   }
+  results.scope = scope;
+  results.currencyOf = currencyOf;
+  results.ownPrev = ownPrev;
   return results;
+}
+
+// The variables a note defines, with their values as they'd be shown.
+function variablesOf(lines, settings) {
+  const res = analyse(lines, settings);
+  const out = [];
+  for (const [name, value] of Object.entries(res.scope)) {
+    if (typeof value === "function" || (name === "prev" && !res.ownPrev)) continue;
+    const text = formatValue(value, { currency: res.currencyOf[name], precision: settings.precision, thousands: settings.thousands, sciExponent: settings.sciExponent });
+    if (text != null) out.push({ name, text });
+  }
+  return out;
 }
 
 // Answers already written after an "=" that are exactly what the calculator
@@ -693,6 +708,16 @@ export default class TahoeMathPlugin extends Plugin {
         return true;
       },
     });
+
+    this.addCommand({
+      id: "show-variables",
+      name: "Show the variables defined in this note",
+      editorCheckCallback: (checking, editor) => {
+        if (!editor.cm || !this.activeForState(editor.cm.state)) return false;
+        if (!checking) this.showVariables(editor);
+        return true;
+      },
+    });
   }
 
   // Settings that only the evaluator reads.
@@ -745,6 +770,11 @@ export default class TahoeMathPlugin extends Plugin {
     } catch {
       new Notice("Couldn't copy to the clipboard.");
     }
+  }
+
+  async showVariables(editor) {
+    await loadEngine();
+    new VariablesModal(this.app, variablesOf(editor.getValue().split("\n"), this.settings)).open();
   }
 
   /* ---------- plain English, via Tahoe Intelligence (on the Mac) ---------- */
@@ -873,6 +903,27 @@ function offsetOf(lines, n) {
   return o;
 }
 
+class VariablesModal extends Modal {
+  constructor(app, variables) {
+    super(app);
+    this.variables = variables;
+  }
+
+  onOpen() {
+    this.titleEl.setText("Variables in this note");
+    if (!this.variables.length) return void this.contentEl.createEl("p", { text: "This note doesn't define any variables yet. Try rate = 12." });
+    for (const v of this.variables) {
+      const row = this.contentEl.createDiv({ cls: "setting-item" });
+      row.createDiv({ cls: "setting-item-info" }).createDiv({ cls: "setting-item-name", text: v.name });
+      row.createDiv({ cls: "setting-item-control tahoe-math-result", text: v.text });
+    }
+  }
+
+  onClose() {
+    this.contentEl.empty();
+  }
+}
+
 class TahoeMathSettingTab extends PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
@@ -966,4 +1017,4 @@ class TahoeMathSettingTab extends PluginSettingTab {
 }
 
 // For tests.
-export { analyse, inMathsLine, writtenAnswers };
+export { analyse, inMathsLine, variablesOf, writtenAnswers };
