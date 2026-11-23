@@ -718,6 +718,19 @@ export default class TahoeMathPlugin extends Plugin {
         return true;
       },
     });
+
+    this.addCommand({
+      id: "reset-words",
+      name: "Forget questions in words worked out so far",
+      callback: async () => {
+        const count = Object.keys(this.settings.words || {}).length;
+        this.settings.words = {};
+        this.tried = new Set();
+        await this.saveData(this.settings);
+        this.refreshEditors();
+        new Notice(count ? `Forgot ${count} worked-out question${count === 1 ? "" : "s"}.` : "Nothing to forget.");
+      },
+    });
   }
 
   // Settings that only the evaluator reads.
