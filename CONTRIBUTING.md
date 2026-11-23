@@ -19,7 +19,7 @@ npm run build     # writes main.js
 
 Copy `main.js`, `manifest.json` and `styles.css` into a test vault's `.obsidian/plugins/tahoe-math/` to try it.
 
-- Plain JavaScript as ES modules in `src/`. Node's modules come only from `src/node.js`, which loads them on desktop only, so the plugin still loads on phones.
+- Plain JavaScript as ES modules in `src/`. No Node modules (`fs`, `path`…), so the plugin loads on phones too.
 - Styles in `styles.css`, with Obsidian's CSS variables and without `:has()` or `!important`.
 - Before sending, run Obsidian's lint, `eslint-plugin-obsidianmd` with its recommended config: it's what the community directory's review runs.
 - Keep the README's disclosures true: anything new that uses the network, another app, the clipboard or files outside the vault has to be listed there.
