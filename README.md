@@ -30,6 +30,7 @@ Variables and functions carry down the note, so later lines can use earlier ones
 - **Answers show as you type.** Nothing is written into your note until you want it.
 - **Keep an answer:** click it, or press Tab at the end of the line, and it's written in.
 - **Use the answer above:** `prev` is the last answer in the note, so `2 * 21 =` then `prev + 8 =` gives **50**. If your note defines its own `prev`, that one is used.
+- **Add up a list:** `@total` (or `@sum`) is the answers above it added up, back to the last blank line or heading, so `$24 =`, `$5 =`, then `@total =` gives **$29.00**.
 - **Write every answer in at once:** run *Write all answers into this note* from the command palette.
 - **Reading view** shows the answers too.
 - **Only where you want it:** turn on *Only in notes marked for maths* in the settings, then add `math: true` to the properties of the notes that should show answers.
@@ -46,15 +47,16 @@ With the companion plugin [Tahoe Intelligence](https://github.com/krishnanefx/ob
 
 [Numerals](https://github.com/gtg922r/obsidian-numerals) and Tahoe Math both use math.js, and both work on phones and tablets. The main difference is where the maths lives: Numerals works in ```` ```math ```` blocks and in inline code like `` `#: 3ft * 4ft` ``, while Tahoe Math works on ordinary lines of text that end in `=`.
 
-**The same:** units and conversions (`72 degF to degC`), variables, your own functions, currency symbols, answers in Reading view.
+**The same:** units and conversions (`72 degF to degC`), variables, your own functions, currency symbols, `@total` and `@sum`, answers in Reading view.
 
 **Different:**
 
 - Tahoe Math skips code blocks, so it doesn't read Numerals' ```` ```math ```` blocks or `#:` inline code. To switch a calculation, move it out of the block and end the line with `=`.
 - Variables in Tahoe Math carry down the whole note. In Numerals they stay in their block unless you name them with `$`.
+- Numerals' `@prev` is `prev` in Tahoe Math.
 - Numerals treats a currency as a unit (`7,200 USD`). Tahoe Math keeps the symbol you typed and shows cents (`$50.00`).
 
-**Numerals does things Tahoe Math doesn't:** `@total`, `@sum` and `@prev`; values from frontmatter, Dataview and other notes; writing results back as Dataview fields; TeX and highlighted render styles; a choice of layouts and number formats; and autocomplete.
+**Numerals does things Tahoe Math doesn't:** values from frontmatter, Dataview and other notes; writing results back as Dataview fields; TeX and highlighted render styles; a choice of layouts and number formats; and autocomplete.
 
 **Side by side:** Numerals works inside its blocks and `#:` code, and Tahoe Math on plain lines, so each leaves the other's text alone.
 

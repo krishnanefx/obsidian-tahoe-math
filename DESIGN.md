@@ -11,6 +11,7 @@ These notes describe how Tahoe Math works as of 1.0.5. Everything lives in one f
 - `total = x * 3 =` defines `total` and shows its value.
 - Plain maths is passed to math.js after the text rewrites described below (percentages, currency symbols, `×÷−`, thousands separators).
 - If the whole line fails, `evaluateTail` looks for the longest tail that works, cutting after a space, tab or colon, so `Total cost: 3 * $12 =` still works. It tries at most 24 cuts. A tail may only start with a word if that word is a variable or a function call, and a lone number after some words doesn't count. This keeps `my midterm on Oct 14 =` from showing `14`.
+- `@total` and `@sum` become one internal variable, set before each line to the answers since the last blank line or heading added up with math.js's `add` (numbers and quantities only; a line that uses `@total` isn't counted by the next). If they can't be added, as in `5 km` and `$3`, there's no answer. It's spelled with `@`, as in Numerals, so the word *total* in a sentence stays a word. A tail may also start with `@total`.
 - Lines that look like words go to the plain-English path (below).
 
 **Showing the answer in Live Preview.** The editor side is a CodeMirror 6 `ViewPlugin`. It builds a decoration set with one `Decoration.widget` (a `ResultWidget`) placed at the end of each line that has an answer. A widget is only added when nothing has been typed after the `=` yet, so once you write an answer in, the ghost answer goes away. The answer is styled with the theme's `--text-accent` colour. Nothing is written to the note until you ask for it.
@@ -109,6 +110,6 @@ The tests live in my development repository, not in this one:
 - The Obsidian scenarios (a hidden test copy of Obsidian driven over its remote-debugging port) only check that Tahoe Math is enabled.
 - `perf.py` measures what each plugin costs by turning them off one at a time, and Tahoe Math is one of them.
 
-- `tests/unit/math.test.cjs` checks precision (significant digits, whole numbers kept, units at most 5, money in cents), the currency of definitions that show their value, `next week` and `next <weekday>`, and that note text can't call math.js's evaluator, parser, compiler, `import`, `reviver` or `createUnit`.
+- `tests/unit/math.test.cjs` checks precision (significant digits, whole numbers kept, units at most 5, money in cents), the currency of definitions that show their value, `next week` and `next <weekday>`, that note text can't call math.js's evaluator, parser, compiler, `import`, `reviver` or `createUnit`, and `@total`/`@sum` (blocks, currency, units, no double counting, the word *total* left alone).
 
 There are no tests for Reading view or the Tab key, and the date parser is only partly covered.

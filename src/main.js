@@ -281,8 +281,13 @@ const LINE_PREFIX = /^(\s*(?:>\s*)*(?:[-*+]\s+(?:\[[ xX]\]\s+)?|\d+[.)]\s+)?)/;
 const DEFINITION = /^([A-Za-z_À-ɏ][\wÀ-ɏ]*(?:\([^()]*\))?)\s*=\s*([^=].*?)\s*$/;
 const CURRENCY = /[$€£¥]/;
 
+// "@total" and "@sum" (as in Numerals): the answers above, back to the last blank line or heading.
+const TOTAL = /@(?:total|sum)\b/i;
+const TOTAL_NAME = "__tahoeTotal";
+
 function preprocess(expr) {
   let e = expr
+    .replace(/@(?:total|sum)\b/gi, TOTAL_NAME)
     .replace(/×/g, "*")
     .replace(/÷/g, "/")
     .replace(/−/g, "-")
@@ -334,6 +339,11 @@ function formatValue(value, { currency, precision, thousands, sciExponent }) {
   return null;
 }
 
+// Numbers and quantities add up; dates, text, true/false and matrices don't count toward @total.
+function summable(v) {
+  return typeof v === "number" ? isFinite(v) : !!(v && typeof v === "object" && (v.isUnit || v.isFraction || v.isBigNumber || v.isComplex));
+}
+
 function tryEvaluate(expr, scope) {
   try {
     return { ok: true, value: limitedEvaluate(preprocess(expr), scope) };
@@ -356,7 +366,7 @@ function evaluateTail(expr, scope) {
     if (!tail) continue;
     // A word only starts the maths if it's a variable or a function ("… leaves at 14" isn't).
     const word = /^[A-Za-z_\u00C0-\u024F][\w\u00C0-\u024F]*/.exec(tail);
-    const isVariable = word && word[0] in scope;
+    const isVariable = (word && word[0] in scope) || TOTAL.test(tail.slice(0, 6));
     if (word && !isVariable && !/^[A-Za-z_]\w*\s*\(/.test(tail)) continue;
     if (!isVariable && !/[\d(]/.test(tail)) continue;
     // "… my midterm on Oct 14" — a lone number after words isn't a calculation.
@@ -380,8 +390,23 @@ function analyse(lines, settings) {
   const currencyIn = (text) => {
     const direct = (CURRENCY.exec(text) || [null])[0];
     if (direct) return direct;
+    if (blockCurrency && TOTAL.test(text)) return blockCurrency;
     for (const name of text.match(IDENT) || []) if (currencyOf[name]) return currencyOf[name];
     return null;
+  };
+  // @total for the line about to be worked out: the block's answers added up,
+  // in the currency they share. Answers that can't be added (12 km + $3) give none.
+  const setTotal = () => {
+    delete scope[TOTAL_NAME];
+    blockCurrency = null;
+    if (!block.length) return;
+    try {
+      scope[TOTAL_NAME] = block.slice(1).reduce((sum, a) => math.add(sum, a.value), block[0].value);
+      const c = block[0].currency;
+      blockCurrency = c && block.every((a) => a.currency === c) ? c : null;
+    } catch {
+      delete scope[TOTAL_NAME];
+    }
   };
   const results = [];
   results.unresolved = []; // lines in words that might be worked out by Tahoe Intelligence
@@ -390,6 +415,8 @@ function analyse(lines, settings) {
   let inFrontmatter = lines[0] && lines[0].trim() === "---";
   let offset = 0;
   let ownPrev = false; // the note defines its own "prev"
+  let block = []; // answers since the last blank line or heading, for @total
+  let blockCurrency = null;
 
   for (let n = 0; n < lines.length; n++) {
     const raw = lines[n];
@@ -407,6 +434,7 @@ function analyse(lines, settings) {
       continue;
     }
     if (inFence) continue;
+    if (/^\s*(?:>\s*)*$/.test(raw) || /^\s*(?:>\s*)*#{1,6}\s/.test(raw)) block = [];
     const trimmed = raw.trim();
     if (trimmed.startsWith("$$")) {
       const oneLine = trimmed.length >= 4 && trimmed.endsWith("$$") && trimmed !== "$$";
@@ -415,6 +443,7 @@ function analyse(lines, settings) {
     }
     if (inMath || !raw.includes("=") || /^\s*=+\s*$/.test(raw) || /^\s*\|/.test(raw)) continue;
 
+    setTotal();
     const prefix = (LINE_PREFIX.exec(raw) || ["", ""])[1];
     let body = raw.slice(prefix.length).replace(/^#{1,6}\s+/, "");
     const currency = currencyIn(body);
@@ -453,6 +482,8 @@ function analyse(lines, settings) {
       if (r.ok) {
         const text = formatValue(r.value, { currency: shown || currencyIn(interpreted || ""), precision: settings.precision, thousands: settings.thousands, sciExponent: settings.sciExponent });
         if (text != null) results.push({ line: n, from: lineStart, to: lineStart + eqIndex + 1, lineEnd: lineStart + raw.length, text, interpreted });
+        // A line that is itself a total isn't counted again by the next one.
+        if (text != null && !TOTAL.test(expr) && !TOTAL.test(interpreted || "") && summable(r.value)) block.push({ value: r.value, currency: shown || currencyIn(interpreted || "") || null });
         if (def && def[1].replace(/\(.*$/, "") === "prev") ownPrev = true;
         // "prev" is the answer above, unless the note defines its own.
         if (!ownPrev && text != null) {
@@ -480,6 +511,7 @@ function analyse(lines, settings) {
       else delete currencyOf[name];
     }
   }
+  delete scope[TOTAL_NAME];
   results.scope = scope;
   results.currencyOf = currencyOf;
   results.ownPrev = ownPrev;
@@ -1025,7 +1057,7 @@ class TahoeMathSettingTab extends PluginSettingTab {
     examples.createEl("div", { cls: "setting-item-name", text: "Try it" });
     const pre = examples.createEl("pre");
     pre.setText(["rent = 1800", "people = 3", "rent / people =", "", "5 km + 300 m =", "3 ft to cm =", "20% of 80 =", "$12.50 * 4 =", "f(t) = t^2 + 1", "f(4) =", "", 'daysUntil("Oct 14") =', "days until Oct 14 ="].join("\n"));
-    containerEl.createDiv({ cls: "tahoe-source-link" }).createEl("a", { text: "Source, issues and ideas on GitHub", href: "https://github.com/krishnanefx/obsidian-tahoe-math" });
+    { const source = containerEl.createDiv({ cls: "tahoe-source-link" }); source.createEl("a", { text: "Source, issues and ideas on GitHub", href: "https://github.com/krishnanefx/obsidian-tahoe-math" }); source.appendText(". If it's useful to you, a star there helps others find it."); }
   }
 }
 
